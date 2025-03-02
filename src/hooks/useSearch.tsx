@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { searchMedia } from '@/services/openverseApi';
 import { SearchParams, MediaType, OpenverseMedia, SearchResponse } from '@/types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from "sonner";
 
 interface UseSearchProps {
   initialQuery?: string;
