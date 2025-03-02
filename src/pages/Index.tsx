@@ -11,14 +11,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from "sonner";
 import { ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import ScreenshotToolbar from '@/components/ScreenshotToolbar';
 
 const Index = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<OpenverseMedia | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [screenshotToolVisible, setScreenshotToolVisible] = useState(false);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -73,10 +71,6 @@ const Index = () => {
         behavior: 'smooth'
       });
     }
-  };
-  
-  const toggleScreenshotTool = () => {
-    setScreenshotToolVisible(prev => !prev);
   };
   
   const hasSearched = query !== '';
@@ -252,13 +246,6 @@ const Index = () => {
           onOpenChange={setIsDetailOpen}
         />
       </div>
-      
-      <AnimatePresence>
-        <ScreenshotToolbar 
-          visible={screenshotToolVisible} 
-          onToggle={toggleScreenshotTool} 
-        />
-      </AnimatePresence>
     </div>
   );
 };
