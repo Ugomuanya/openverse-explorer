@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSearch } from '@/hooks/useSearch';
 import SearchHero from '@/components/SearchHero';
 import SearchBar from '@/components/SearchBar';
@@ -9,12 +9,16 @@ import { OpenverseMedia } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from "sonner";
+import { ChevronUp } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<OpenverseMedia | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const searchBarRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
   const { 
@@ -29,6 +33,25 @@ const Index = () => {
     loadMore 
   } = useSearch();
   
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mainRef.current) {
+        setShowScrollTop(mainRef.current.scrollTop > 300);
+      }
+    };
+    
+    const mainElement = mainRef.current;
+    if (mainElement) {
+      mainElement.addEventListener('scroll', handleScroll);
+    }
+    
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+  
   const handleSearchFocus = () => {
     setSearchFocused(true);
     if (searchBarRef.current) {
@@ -41,40 +64,59 @@ const Index = () => {
     setIsDetailOpen(true);
   };
   
+  const scrollToTop = () => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
+  
   const hasSearched = query !== '';
   
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background overflow-hidden">
       <Toaster position="top-center" />
       
       <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex justify-between items-center h-16 px-4">
-          <div className="flex items-center space-x-2">
+          <motion.div 
+            className="flex items-center space-x-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="font-bold text-xl tracking-tight">OpenVerse Explorer</div>
-          </div>
+          </motion.div>
           
           {(searchFocused || hasSearched || isMobile) && (
-            <div className="flex-1 max-w-xl mx-4 hidden sm:block">
+            <motion.div 
+              className="flex-1 max-w-xl mx-4 hidden sm:block"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
               <SearchBar 
                 onSearch={handleSearch}
                 initialQuery={query}
                 initialMediaType={mediaType}
                 focused={true}
               />
-            </div>
+            </motion.div>
           )}
         </div>
       </header>
       
-      <main className="flex-1">
+      <main className="flex-1 overflow-y-auto" ref={mainRef}>
         <AnimatePresence mode="wait">
           {!hasSearched ? (
             <motion.div
               key="hero"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
             >
               <SearchHero onSearchFocus={handleSearchFocus} />
               
@@ -88,20 +130,30 @@ const Index = () => {
               </div>
               
               <div className="container mx-auto px-4 py-16">
-                <div className="max-w-3xl mx-auto space-y-16 text-center">
-                  <section className="space-y-4">
+                <div className="max-w-3xl mx-auto space-y-16">
+                  <motion.section 
+                    className="space-y-4 text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
                     <h2 className="text-2xl font-bold">Find the perfect creative assets</h2>
                     <p className="text-muted-foreground">
                       Access millions of images, audio files, and more for your creative projects - all open-licensed and free to use.
                     </p>
-                  </section>
+                  </motion.section>
                   
-                  <section className="space-y-4">
+                  <motion.section 
+                    className="space-y-4 text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                  >
                     <h2 className="text-2xl font-bold">Properly attribution made easy</h2>
                     <p className="text-muted-foreground">
                       Get ready-to-use attribution text for any media you find, making it simple to credit creators correctly.
                     </p>
-                  </section>
+                  </motion.section>
                 </div>
               </div>
             </motion.div>
@@ -111,7 +163,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
               className="container mx-auto px-4 py-8"
             >
               <div className="mb-8 sm:hidden" ref={searchBarRef}>
@@ -124,12 +176,17 @@ const Index = () => {
               </div>
               
               {error && (
-                <div className="my-8 p-4 border border-destructive/20 bg-destructive/10 rounded-lg">
+                <motion.div 
+                  className="my-8 p-4 border border-destructive/20 bg-destructive/10 rounded-lg"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <p className="text-destructive font-medium">Error: {error}</p>
                   <p className="text-muted-foreground text-sm mt-1">
                     Please try again or check your connection.
                   </p>
-                </div>
+                </motion.div>
               )}
               
               <MediaGrid 
@@ -140,6 +197,27 @@ const Index = () => {
                 onMediaClick={handleMediaClick}
                 totalResults={totalResults}
               />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <AnimatePresence>
+          {showScrollTop && (
+            <motion.div 
+              className="fixed bottom-6 right-6 z-50"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button 
+                onClick={scrollToTop} 
+                size="icon" 
+                className="h-10 w-10 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <ChevronUp className="h-5 w-5" />
+                <span className="sr-only">Scroll to top</span>
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>
