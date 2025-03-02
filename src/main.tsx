@@ -6,7 +6,8 @@ import App from './App';
 import './index.css';
 
 // Set Clerk publishable key
-const PUBLISHABLE_KEY = "pk_test_dG9sZXJhbnQtZmlzaC05Mi5jbGVyay5hY2NvdW50cy5kZXYk";
+// Use import.meta.env for Vite environment variables
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_dG9sZXJhbnQtZmlzaC05Mi5jbGVyay5hY2NvdW50cy5kZXYk";
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key");
