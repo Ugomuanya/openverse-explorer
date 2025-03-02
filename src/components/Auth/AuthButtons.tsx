@@ -4,7 +4,17 @@ import { useAuth, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-re
 import { Button } from "@/components/ui/button";
 
 export const AuthButtons = () => {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  // If authentication is still loading or has error, show disabled buttons
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled>Sign In</Button>
+        <Button size="sm" disabled>Sign Up</Button>
+      </div>
+    );
+  }
 
   if (isSignedIn) {
     return <UserButton afterSignOutUrl="/" />;
