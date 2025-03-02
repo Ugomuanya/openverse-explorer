@@ -18,8 +18,12 @@ const headers = {
  */
 export const searchMedia = async (mediaType: MediaType, params: SearchParams): Promise<SearchResponse> => {
   try {
-    // Construct the URL based on media type
-    const endpoint = mediaType === 'all' ? '/v1/search' : `/v1/${mediaType}s`;
+    // Add API support for video search
+    const endpoint = (() => {
+      if (mediaType === 'all') return '/v1/search';
+      if (mediaType === 'video') return '/v1/videos'; // Add video endpoint
+      return `/v1/${mediaType}s`;
+    })();
     
     // Construct query string from params
     const queryParams = new URLSearchParams();
@@ -30,6 +34,9 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
       }
     });
     
+    // Add console log for debugging
+    console.log(`Fetching from: ${BASE_URL}${endpoint}?${queryParams.toString()}`);
+    
     // Make the request
     const response = await fetch(`${BASE_URL}${endpoint}?${queryParams.toString()}`, {
       method: 'GET',
@@ -37,10 +44,14 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API response error:', response.status, errorText);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('Search results:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching media:', error);
     throw error;

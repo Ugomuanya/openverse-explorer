@@ -48,19 +48,36 @@ export function useSearch({
         filter_dead: true,
       };
 
-      const response = await searchMedia(mediaType, params);
+      console.log(`Searching for "${query}" in ${mediaType}, page ${currentPage}`);
       
-      setTotalResults(response.result_count);
-      setTotalPages(response.page_count);
-      setHasMore(currentPage < response.page_count);
+      const response = await searchMedia(mediaType, params);
+      console.log("Search response:", response);
+      
+      // Check if we got valid results
+      if (!response || !response.results) {
+        throw new Error("Invalid response format from API");
+      }
+      
+      setTotalResults(response.result_count || 0);
+      setTotalPages(response.page_count || 0);
+      setHasMore(currentPage < (response.page_count || 0));
 
       if (resetResults) {
-        setResults(response.results);
+        setResults(response.results || []);
         setPage(1);
       } else {
-        setResults(prev => [...prev, ...response.results]);
+        setResults(prev => [...prev, ...(response.results || [])]);
       }
+      
+      // Show toast only when we get results
+      if (response.results && response.results.length > 0) {
+        toast.success(`Found ${response.result_count} results`);
+      } else if (response.result_count === 0) {
+        toast.info("No results found. Try different search terms.");
+      }
+      
     } catch (err) {
+      console.error("Search error:", err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       toast.error('Could not fetch search results', {
         description: err instanceof Error ? err.message : 'Please try again later',
@@ -84,6 +101,13 @@ export function useSearch({
     if (loading || !hasMore) return;
     setPage(prevPage => prevPage + 1);
   }, [loading, hasMore]);
+
+  // Execute initial search if initialQuery is provided
+  useEffect(() => {
+    if (initialQuery) {
+      fetchResults(true);
+    }
+  }, [initialQuery, fetchResults]);
 
   // Fetch results when page changes
   useEffect(() => {

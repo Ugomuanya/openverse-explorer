@@ -8,6 +8,7 @@ import MediaDetail from '@/components/MediaDetail';
 import { OpenverseMedia } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Toaster } from "sonner";
 
 const Index = () => {
   const [searchFocused, setSearchFocused] = useState(false);
@@ -21,6 +22,7 @@ const Index = () => {
     mediaType, 
     results, 
     loading, 
+    error,
     totalResults, 
     hasMore, 
     handleSearch, 
@@ -43,6 +45,8 @@ const Index = () => {
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Toaster position="top-center" />
+      
       <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex justify-between items-center h-16 px-4">
           <div className="flex items-center space-x-2">
@@ -118,6 +122,15 @@ const Index = () => {
                   focused={true}
                 />
               </div>
+              
+              {error && (
+                <div className="my-8 p-4 border border-destructive/20 bg-destructive/10 rounded-lg">
+                  <p className="text-destructive font-medium">Error: {error}</p>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Please try again or check your connection.
+                  </p>
+                </div>
+              )}
               
               <MediaGrid 
                 media={results}
