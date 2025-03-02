@@ -11,12 +11,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from "sonner";
 import { ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import ScreenshotToolbar from '@/components/ScreenshotToolbar';
 
 const Index = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<OpenverseMedia | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [screenshotToolVisible, setScreenshotToolVisible] = useState(false);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -73,6 +75,10 @@ const Index = () => {
     }
   };
   
+  const toggleScreenshotTool = () => {
+    setScreenshotToolVisible(prev => !prev);
+  };
+  
   const hasSearched = query !== '';
   
   return (
@@ -93,6 +99,7 @@ const Index = () => {
           {(searchFocused || hasSearched || isMobile) && (
             <motion.div 
               className="flex-1 max-w-xl mx-4 hidden sm:block"
+              id="search-bar"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
@@ -108,7 +115,7 @@ const Index = () => {
         </div>
       </header>
       
-      <main className="flex-1 overflow-y-auto" ref={mainRef}>
+      <main className="flex-1 overflow-y-auto" ref={mainRef} id="main-content">
         <AnimatePresence mode="wait">
           {!hasSearched ? (
             <motion.div
@@ -189,14 +196,16 @@ const Index = () => {
                 </motion.div>
               )}
               
-              <MediaGrid 
-                media={results}
-                loading={loading}
-                hasMore={hasMore}
-                onLoadMore={loadMore}
-                onMediaClick={handleMediaClick}
-                totalResults={totalResults}
-              />
+              <div id="media-results">
+                <MediaGrid 
+                  media={results}
+                  loading={loading}
+                  hasMore={hasMore}
+                  onLoadMore={loadMore}
+                  onMediaClick={handleMediaClick}
+                  totalResults={totalResults}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -236,11 +245,20 @@ const Index = () => {
         </div>
       </footer>
       
-      <MediaDetail 
-        media={selectedMedia}
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-      />
+      <div id="media-detail">
+        <MediaDetail 
+          media={selectedMedia}
+          open={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+        />
+      </div>
+      
+      <AnimatePresence>
+        <ScreenshotToolbar 
+          visible={screenshotToolVisible} 
+          onToggle={toggleScreenshotTool} 
+        />
+      </AnimatePresence>
     </div>
   );
 };
