@@ -33,6 +33,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
     }
   }, [focused]);
 
+  // Update local state when props change
+  useEffect(() => {
+    if (initialQuery !== query) {
+      setQuery(initialQuery);
+    }
+    if (initialMediaType !== mediaType) {
+      setMediaType(initialMediaType);
+    }
+  }, [initialQuery, initialMediaType]);
+
   const handleFocus = () => {
     setIsExpanded(true);
     onFocusChange?.(true);
@@ -41,6 +51,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      console.log("Search initiated for:", query, mediaType);
       onSearch(query, mediaType);
     }
   };
@@ -54,6 +65,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setMediaType(type);
     if (query.trim()) {
       onSearch(query, type);
+    }
+  };
+
+  // Handle keyboard shortcuts
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && query.trim()) {
+      e.preventDefault();
+      onSearch(query, mediaType);
     }
   };
 
@@ -92,6 +111,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={handleFocus}
+            onKeyPress={handleKeyPress}
             className={cn(
               "flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 transition-all duration-300 placeholder:text-muted-foreground/70",
               isExpanded ? "text-lg" : "text-base"
@@ -134,6 +154,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
             >
               <Music className="h-3.5 w-3.5" />
               <span>Audio</span>
+            </Button>
+            
+            <Button
+              type="button"
+              size="sm"
+              variant={mediaType === 'video' ? 'default' : 'outline'}
+              onClick={() => handleMediaTypeChange('video')}
+              className="rounded-full h-8 gap-1.5 transition-all"
+            >
+              <Video className="h-3.5 w-3.5" />
+              <span>Video</span>
             </Button>
             
             <Button

@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { searchMedia } from '@/services/openverseApi';
 import { SearchParams, MediaType, OpenverseMedia, SearchResponse } from '@/types';
-import { toast } from "sonner";
+import { toast } from "sonner";  // Import directly from sonner package
 
 interface UseSearchProps {
   initialQuery?: string;
@@ -53,10 +54,21 @@ export function useSearch({
       const response = await searchMedia(mediaType, params);
       console.log("Search response:", response);
       
+      // Log more details to help diagnose the issue
+      if (!response) {
+        console.error("No response from API");
+        throw new Error("No response from API");
+      }
+      
+      console.log("Response structure:", Object.keys(response));
+      
       // Check if we got valid results
-      if (!response || !response.results) {
+      if (!response.results) {
+        console.error("No results array in response:", response);
         throw new Error("Invalid response format from API");
       }
+      
+      console.log(`Results found: ${response.results.length}`);
       
       setTotalResults(response.result_count || 0);
       setTotalPages(response.page_count || 0);

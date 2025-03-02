@@ -37,10 +37,11 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
     // Add console log for debugging
     console.log(`Fetching from: ${BASE_URL}${endpoint}?${queryParams.toString()}`);
     
-    // Make the request
+    // Make the request - Add CORS mode to help with potential cross-origin issues
     const response = await fetch(`${BASE_URL}${endpoint}?${queryParams.toString()}`, {
       method: 'GET',
       headers,
+      mode: 'cors',
     });
     
     if (!response.ok) {
