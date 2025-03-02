@@ -8,11 +8,8 @@ import { OpenverseMedia } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from "sonner";
-import { ChevronUp, User } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { AuthButtons } from "@/components/Auth/AuthButtons";
-import { useAuth } from "@clerk/clerk-react";
-import { Link } from "react-router-dom";
 
 const Index = () => {
   const [searchFocused, setSearchFocused] = useState(false);
@@ -22,7 +19,6 @@ const Index = () => {
   const searchBarRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const { isSignedIn } = useAuth();
 
   const { 
     query, 
@@ -109,18 +105,6 @@ const Index = () => {
               />
             </motion.div>
           )}
-
-          <div className="flex items-center gap-2">
-            {isSignedIn && (
-              <Link to="/profile">
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Profile</span>
-                </Button>
-              </Link>
-            )}
-            <AuthButtons />
-          </div>
         </div>
       </header>
       
