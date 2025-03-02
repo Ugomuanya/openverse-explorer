@@ -6,7 +6,7 @@ import App from './App';
 import './index.css';
 
 // Set Clerk publishable key
-const PUBLISHABLE_KEY = "pk_test_cmVndWxhci1lYWdsZS01NS5jbGVyay5hY2NvdW50cy5kZXYk";
+const PUBLISHABLE_KEY = "pk_test_dG9sZXJhbnQtZmlzaC05Mi5jbGVyay5hY2NvdW50cy5kZXYk";
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key");
