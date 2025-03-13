@@ -4,6 +4,10 @@ import { SearchParams, MediaType, SearchResponse } from '@/types';
 // Base URL for Openverse API
 const BASE_URL = 'https://api.openverse.org';
 
+// Authentication credentials
+const client_id = '56qA4YKTCOwu9CafxN3xUVPYoeu6ypXCypD1UiLf'
+const client_secret = 'RWncDWZrDqnsRCPZNYifiQsuXStUWjJxTyRygJEPlgaBVpTTEimeZ8YdALW2f0qzTERYNagwNgwTJyfCrH1lcnJq3yLdHoNRy8z9Z499TSjocGq9SYeeRLv7BQ2IUl2n'
+
 // Headers for API requests
 const headers = {
   'Accept': 'application/json',
