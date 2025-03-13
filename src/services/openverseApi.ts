@@ -2,7 +2,7 @@
 import { SearchParams, MediaType, SearchResponse } from '@/types';
 
 // Base URL for Openverse API
-const BASE_URL = 'https://api.openverse.engineering';
+const BASE_URL = 'https://api.openverse.org';
 
 // Headers for API requests
 const headers = {
