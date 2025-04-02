@@ -11,6 +11,24 @@ interface UseSearchProps {
   pageSize?: number;
 }
 
+// Direct audio search function from your code
+async function searchAudioDirect(query: string): Promise<any[]> {
+  const apiUrl = `https://api.openverse.engineering/v1/audio/?q=${encodeURIComponent(query)}`;
+
+  try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+          throw new Error(`Error fetching data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.results || [];
+  } catch (error) {
+      console.error("Failed to fetch audio data:", error);
+      return [];
+  }
+}
+
 export function useSearch({ 
   initialQuery = '', 
   initialMediaType = 'image',
@@ -62,7 +80,37 @@ export function useSearch({
 
       console.log(`Searching for "${query}" in ${mediaType}, page ${currentPage}`);
       
-      const response = await searchMedia(mediaType, params);
+      // Enhanced approach: use direct audio search function for audio media type
+      let response;
+      if (mediaType === 'audio') {
+        // Use the direct audio search function
+        const audioResults = await searchAudioDirect(query);
+        // Convert to OpenverseMedia format
+        const formattedResults = audioResults.map(item => ({
+          ...item,
+          thumbnail: item.thumbnail || '/placeholder.svg',
+          creator_url: item.creator_url || '#',
+          foreign_landing_url: item.foreign_landing_url || item.url || '#',
+          license_version: item.license_version || '1.0',
+          provider: item.provider || 'openverse',
+          source: item.source || 'openverse',
+          detail_url: item.detail_url || `#${item.id}`,
+          related_url: item.related_url || `#${item.id}/related`,
+          audio_url: item.url // Store the audio URL
+        }));
+        
+        // Create a response structure similar to the one from searchMedia
+        response = {
+          results: formattedResults,
+          result_count: formattedResults.length,
+          page_count: 1, // Simplified pagination for direct search
+          page: 1
+        };
+      } else {
+        // Use the existing searchMedia function for other media types
+        response = await searchMedia(mediaType, params);
+      }
+      
       console.log("Search response:", response);
       
       // Check if we got valid results
@@ -85,9 +133,11 @@ export function useSearch({
             };
           } else if (mediaType === 'audio') {
             // Handle audio items
+            const audioItem = item as OpenverseAudioMedia;
             return {
               ...item,
-              thumbnail: item.thumbnail || '/placeholder.svg'
+              thumbnail: item.thumbnail || '/placeholder.svg',
+              url: audioItem.audio_url || audioItem.url // Ensure URL is available
             };
           } else {
             // Default case (image or other)

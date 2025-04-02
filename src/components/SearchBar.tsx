@@ -183,6 +183,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
             >
               <Music className="h-3.5 w-3.5" />
               <span>Audio</span>
+              {!isSignedIn && (
+                <span className="ml-1 text-xs text-green-500 font-medium">(No sign-in required)</span>
+              )}
             </Button>
             
             <Button
@@ -229,7 +232,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
       
       {isExpanded && !isSignedIn && (
         <div className="mt-2 text-center text-sm">
-          <p className="text-muted-foreground mb-2">Sign in to search for images and videos</p>
+          <p className="text-muted-foreground mb-2">
+            Sign in to search for images and videos. <span className="text-primary">Audio search is available without sign-in!</span>
+          </p>
           <SignInButton mode="modal">
             <Button size="sm" variant="outline">Sign In</Button>
           </SignInButton>
