@@ -1,3 +1,4 @@
+
 import { SearchParams, MediaType, SearchResponse } from '@/types';
 
 // Base URL for Openverse API
@@ -289,7 +290,7 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
       return {
         result_count: 0,
         page_count: 0,
-        page_size: pageSize,
+        page_size: params.page_size || 20,
         page: params.page || 1,
         results: []
       };
