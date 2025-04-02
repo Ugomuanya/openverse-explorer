@@ -1,5 +1,6 @@
-
 # OPENVERSE-EXPLORER
+
+**Last Updated: June 26, 2024**
 
 ## Project Planning & Software Engineering Principles
 
@@ -123,4 +124,3 @@ The project uses a CI/CD pipeline with:
 1. **Github Actions**: For automated testing and build verification
 2. **Netlify/Vercel**: For automated deployment
 3. **Environment-based configurations**: For development, staging, and production
-
