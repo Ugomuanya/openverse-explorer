@@ -54,21 +54,24 @@ export function useSearch({
       const response = await searchMedia(mediaType, params);
       console.log("Search response:", response);
       
-      // Log more details to help diagnose the issue
-      if (!response) {
-        console.error("No response from API");
-        throw new Error("No response from API");
-      }
-      
-      console.log("Response structure:", Object.keys(response));
-      
       // Check if we got valid results
-      if (!response.results) {
-        console.error("No results array in response:", response);
+      if (!response || !response.results) {
+        console.error("No valid response from API");
         throw new Error("Invalid response format from API");
       }
       
       console.log(`Results found: ${response.results.length}`);
+      
+      // Handle case where audio API returns different structure
+      if (mediaType === 'audio' && Array.isArray(response.results)) {
+        response.results = response.results.map(item => {
+          // Transform audio-specific fields if needed
+          return {
+            ...item,
+            thumbnail: item.thumbnail || '/placeholder.svg'
+          };
+        });
+      }
       
       setTotalResults(response.result_count || 0);
       setTotalPages(response.page_count || 0);
