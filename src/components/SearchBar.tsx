@@ -1,9 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, Image, Music, Video, Globe } from 'lucide-react';
+import { Search, X, Image, Music, Video, Globe, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { MediaType } from '@/types';
+import { useAuth } from '@clerk/clerk-react';
+import { SignInButton } from '@clerk/clerk-react';
+import { toast } from 'sonner';
 
 interface SearchBarProps {
   onSearch: (query: string, mediaType: MediaType) => void;
@@ -26,6 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [mediaType, setMediaType] = useState<MediaType>(initialMediaType);
   const [isExpanded, setIsExpanded] = useState(focused);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     if (focused && inputRef.current) {
@@ -51,6 +55,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      if ((mediaType === 'image' || mediaType === 'video') && !isSignedIn) {
+        toast.error('Authentication required', {
+          description: 'Please sign in to search for images and videos',
+        });
+        return;
+      }
+      
       console.log("Search initiated for:", query, mediaType);
       onSearch(query, mediaType);
     }
@@ -62,6 +73,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleMediaTypeChange = (type: MediaType) => {
+    if ((type === 'image' || type === 'video') && !isSignedIn) {
+      toast.error('Authentication required', {
+        description: 'Please sign in to search for images and videos',
+      });
+      return;
+    }
+    
     setMediaType(type);
     if (query.trim()) {
       onSearch(query, type);
@@ -72,6 +90,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && query.trim()) {
       e.preventDefault();
+      if ((mediaType === 'image' || mediaType === 'video') && !isSignedIn) {
+        toast.error('Authentication required', {
+          description: 'Please sign in to search for images and videos',
+        });
+        return;
+      }
       onSearch(query, mediaType);
     }
   };
@@ -139,8 +163,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
               size="sm"
               variant={mediaType === 'image' ? 'default' : 'outline'}
               onClick={() => handleMediaTypeChange('image')}
-              className="rounded-full h-8 gap-1.5 transition-all"
+              className={cn(
+                "rounded-full h-8 gap-1.5 transition-all",
+                !isSignedIn && "relative"
+              )}
+              disabled={!isSignedIn}
             >
+              {!isSignedIn && <Lock className="absolute right-1.5 top-1.5 h-2.5 w-2.5 text-muted-foreground" />}
               <Image className="h-3.5 w-3.5" />
               <span>Images</span>
             </Button>
@@ -161,8 +190,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
               size="sm"
               variant={mediaType === 'video' ? 'default' : 'outline'}
               onClick={() => handleMediaTypeChange('video')}
-              className="rounded-full h-8 gap-1.5 transition-all"
+              className={cn(
+                "rounded-full h-8 gap-1.5 transition-all",
+                !isSignedIn && "relative"
+              )}
+              disabled={!isSignedIn}
             >
+              {!isSignedIn && <Lock className="absolute right-1.5 top-1.5 h-2.5 w-2.5 text-muted-foreground" />}
               <Video className="h-3.5 w-3.5" />
               <span>Video</span>
             </Button>
@@ -172,8 +206,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
               size="sm"
               variant={mediaType === 'all' ? 'default' : 'outline'}
               onClick={() => handleMediaTypeChange('all')}
-              className="rounded-full h-8 gap-1.5 transition-all"
+              className={cn(
+                "rounded-full h-8 gap-1.5 transition-all",
+                !isSignedIn && "relative"
+              )}
+              disabled={!isSignedIn}
             >
+              {!isSignedIn && <Lock className="absolute right-1.5 top-1.5 h-2.5 w-2.5 text-muted-foreground" />}
               <Globe className="h-3.5 w-3.5" />
               <span>All</span>
             </Button>
@@ -187,6 +226,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
           </div>
         )}
       </form>
+      
+      {isExpanded && !isSignedIn && (
+        <div className="mt-2 text-center text-sm">
+          <p className="text-muted-foreground mb-2">Sign in to search for images and videos</p>
+          <SignInButton mode="modal">
+            <Button size="sm" variant="outline">Sign In</Button>
+          </SignInButton>
+        </div>
+      )}
     </div>
   );
 };

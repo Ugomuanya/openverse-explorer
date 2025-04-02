@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { searchMedia } from '@/services/openverseApi';
 import { SearchParams, MediaType, OpenverseMedia, SearchResponse } from '@/types';
-import { toast } from "sonner";  // Import directly from sonner package
+import { toast } from "sonner";
+import { useAuth } from '@clerk/clerk-react';
 
 interface UseSearchProps {
   initialQuery?: string;
@@ -24,6 +24,7 @@ export function useSearch({
   const [totalResults, setTotalResults] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(false);
+  const { isSignedIn } = useAuth();
 
   const fetchResults = useCallback(async (resetResults: boolean = false) => {
     if (!query.trim()) {
@@ -33,6 +34,15 @@ export function useSearch({
         setTotalPages(0);
         setHasMore(false);
       }
+      return;
+    }
+
+    // Check if user is allowed to search for this media type
+    if ((mediaType === 'image' || mediaType === 'video') && !isSignedIn) {
+      toast.error('Authentication required', {
+        description: 'Please sign in to search for images and videos',
+      });
+      setError('Authentication required to search for images and videos');
       return;
     }
 
@@ -100,7 +110,7 @@ export function useSearch({
     } finally {
       setLoading(false);
     }
-  }, [query, mediaType, page, pageSize]);
+  }, [query, mediaType, page, pageSize, isSignedIn]);
 
   const handleSearch = useCallback((newQuery: string, newMediaType?: MediaType) => {
     const updatedMediaType = newMediaType || mediaType;
@@ -144,5 +154,6 @@ export function useSearch({
     handleSearch,
     loadMore,
     setMediaType,
+    isAuthorized: isSignedIn || (mediaType !== 'image' && mediaType !== 'video'),
   };
 }
