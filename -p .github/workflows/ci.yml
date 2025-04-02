@@ -1,0 +1,28 @@
+name: Test TypeScript Code
+
+on:
+  push:
+    branches:
+      - main  # This triggers the workflow on push to the main branch
+  pull_request:
+    branches:
+      - main  # This triggers the workflow on pull requests to the main branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  # Runs the job on Ubuntu
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'  # Specify Node.js version
+
+      - name: Install dependencies
+        run: npm install  # Installs the dependencies
+
+      - name: Run tests
+        run: npx jest --coverage  # Run the tests with coverage report
