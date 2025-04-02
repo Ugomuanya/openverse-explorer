@@ -55,9 +55,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      if ((mediaType === 'image' || mediaType === 'video') && !isSignedIn) {
+      // Check auth requirements - audio doesn't need auth
+      if ((mediaType === 'image' || mediaType === 'video' || mediaType === 'all') && !isSignedIn) {
         toast.error('Authentication required', {
-          description: 'Please sign in to search for images and videos',
+          description: `Please sign in to search for ${mediaType}`,
         });
         return;
       }
@@ -73,9 +74,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleMediaTypeChange = (type: MediaType) => {
-    if ((type === 'image' || type === 'video') && !isSignedIn) {
+    // Check auth requirements - audio doesn't need auth
+    if ((type === 'image' || type === 'video' || type === 'all') && !isSignedIn) {
       toast.error('Authentication required', {
-        description: 'Please sign in to search for images and videos',
+        description: `Please sign in to search for ${type}`,
       });
       return;
     }
@@ -90,9 +92,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && query.trim()) {
       e.preventDefault();
-      if ((mediaType === 'image' || mediaType === 'video') && !isSignedIn) {
+      // Check auth requirements - audio doesn't need auth
+      if ((mediaType === 'image' || mediaType === 'video' || mediaType === 'all') && !isSignedIn) {
         toast.error('Authentication required', {
-          description: 'Please sign in to search for images and videos',
+          description: `Please sign in to search for ${mediaType}`,
         });
         return;
       }

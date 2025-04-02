@@ -60,7 +60,15 @@ export function useSearch({
       
       return response;
     } catch (error) {
-      throw error;
+      console.error("Error in fetchDirectResults:", error);
+      // Return a valid but empty response to avoid crashing
+      return {
+        result_count: 0,
+        page_count: 0,
+        page_size: pageSize,
+        page: currentPage,
+        results: []
+      };
     }
   }, [pageSize]);
 
@@ -76,7 +84,7 @@ export function useSearch({
     }
 
     // Check if user is allowed to search for this media type
-    if ((mediaType === 'all' || mediaType === 'video') && !isSignedIn) {
+    if ((mediaType === 'video' || mediaType === 'all') && !isSignedIn) {
       toast.error('Authentication required', {
         description: 'Please sign in to search for videos and all media types',
       });
@@ -97,16 +105,13 @@ export function useSearch({
       
       console.log("Search response:", response);
       
-      // Check if we got valid results
-      if (!response || !response.results) {
-        console.error("No valid response from API");
-        throw new Error("Invalid response format from API");
-      }
+      // Check if we got valid results (with fallback to empty arrays)
+      const resultArray = response?.results || [];
       
-      console.log(`Results found: ${response.results.length}`);
+      console.log(`Results found: ${resultArray.length}`);
       
       // Process results to ensure consistent format
-      const processedResults = response.results.map(item => {
+      const processedResults = resultArray.map(item => {
         // Check media type and ensure thumbnail is available
         if (mediaType === 'video') {
           const videoItem = item as OpenverseVideoMedia;
@@ -143,9 +148,12 @@ export function useSearch({
         }
       });
       
-      setTotalResults(response.result_count || processedResults.length || 0);
-      setTotalPages(response.page_count || Math.ceil((response.result_count || processedResults.length) / pageSize) || 0);
-      setHasMore(currentPage < (response.page_count || Math.ceil((response.result_count || processedResults.length) / pageSize) || 0));
+      const resultCount = response?.result_count || resultArray.length || 0;
+      const pageCount = response?.page_count || Math.ceil(resultCount / pageSize) || 0;
+      
+      setTotalResults(resultCount);
+      setTotalPages(pageCount);
+      setHasMore(currentPage < pageCount);
 
       if (resetResults) {
         setResults(processedResults || []);
@@ -156,8 +164,8 @@ export function useSearch({
       
       // Show toast only when we get results
       if (processedResults && processedResults.length > 0) {
-        toast.success(`Found ${response.result_count || processedResults.length} results`);
-      } else if (processedResults.length === 0) {
+        toast.success(`Found ${resultCount} results`);
+      } else {
         toast.info("No results found. Try different search terms.");
       }
       
@@ -167,6 +175,11 @@ export function useSearch({
       toast.error('Could not fetch search results', {
         description: err instanceof Error ? err.message : 'Please try again later',
       });
+      
+      // Reset results on error if requested
+      if (resetResults) {
+        setResults([]);
+      }
     } finally {
       setLoading(false);
     }

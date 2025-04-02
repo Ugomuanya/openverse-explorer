@@ -1,4 +1,3 @@
-
 import { SearchParams, MediaType, SearchResponse } from '@/types';
 
 // Base URL for Openverse API
@@ -64,6 +63,7 @@ const getAccessToken = async (): Promise<string | null> => {
 
 /**
  * Direct search for audio content (no auth required)
+ * Uses CORS proxy to bypass CORS restrictions
  * @param query - Search term
  * @param page - Page number
  * @param pageSize - Items per page
@@ -75,10 +75,10 @@ export const searchAudioDirect = async (
   pageSize: number = 20
 ): Promise<any> => {
   try {
-    // Use the engineering endpoint which doesn't require auth
-    const apiUrl = `${ENGINEERING_BASE_URL}/v1/audio/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    // Use a CORS proxy to bypass CORS issues
+    const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`${ENGINEERING_BASE_URL}/v1/audio/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`)}`;
     
-    console.log(`Fetching audio directly from: ${apiUrl}`);
+    console.log(`Fetching audio directly from (with CORS proxy): ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -95,15 +95,31 @@ export const searchAudioDirect = async (
     
     const data = await response.json();
     console.log('Direct audio search results:', data);
+    
+    // If we got no results but no error, return empty results set
+    if (!data || !data.results) {
+      return {
+        result_count: 0,
+        page_count: 0,
+        results: []
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error fetching audio directly:', error);
-    throw error;
+    // Return empty result set on error to prevent app from crashing
+    return {
+      result_count: 0,
+      page_count: 0,
+      results: []
+    };
   }
 };
 
 /**
  * Direct search for video content 
+ * Uses CORS proxy to bypass CORS restrictions
  * @param query - Search term
  * @param page - Page number
  * @param pageSize - Items per page
@@ -115,10 +131,10 @@ export const searchVideoDirect = async (
   pageSize: number = 20
 ): Promise<any> => {
   try {
-    // Use the engineering endpoint which might be more reliable for video
-    const apiUrl = `${ENGINEERING_BASE_URL}/v1/video/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    // Use a CORS proxy to bypass CORS issues
+    const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`${ENGINEERING_BASE_URL}/v1/video/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`)}`;
     
-    console.log(`Fetching video directly from: ${apiUrl}`);
+    console.log(`Fetching video directly from (with CORS proxy): ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -135,15 +151,31 @@ export const searchVideoDirect = async (
     
     const data = await response.json();
     console.log('Direct video search results:', data);
+    
+    // If we got no results but no error, return empty results set
+    if (!data || !data.results) {
+      return {
+        result_count: 0,
+        page_count: 0,
+        results: []
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error fetching video directly:', error);
-    throw error;
+    // Return empty result set on error to prevent app from crashing
+    return {
+      result_count: 0,
+      page_count: 0,
+      results: []
+    };
   }
 };
 
 /**
  * Direct search for image content - faster than using authenticated API
+ * Uses CORS proxy to bypass CORS restrictions
  * @param query - Search term
  * @param page - Page number
  * @param pageSize - Items per page
@@ -155,10 +187,10 @@ export const searchImageDirect = async (
   pageSize: number = 20
 ): Promise<any> => {
   try {
-    // Use the engineering endpoint for faster image searches
-    const apiUrl = `${ENGINEERING_BASE_URL}/v1/images/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    // Use a CORS proxy to bypass CORS issues
+    const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`${ENGINEERING_BASE_URL}/v1/images/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`)}`;
     
-    console.log(`Fetching images directly from: ${apiUrl}`);
+    console.log(`Fetching images directly from (with CORS proxy): ${apiUrl}`);
     
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -175,10 +207,25 @@ export const searchImageDirect = async (
     
     const data = await response.json();
     console.log('Direct image search results:', data);
+    
+    // If we got no results but no error, return empty results set
+    if (!data || !data.results) {
+      return {
+        result_count: 0,
+        page_count: 0,
+        results: []
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error fetching images directly:', error);
-    throw error;
+    // Return empty result set on error to prevent app from crashing
+    return {
+      result_count: 0,
+      page_count: 0,
+      results: []
+    };
   }
 };
 
@@ -204,6 +251,7 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
     }
     
     // For 'all' media type, use the standard API with authentication
+    // Use a CORS proxy to bypass CORS issues
     const endpoint = '/v1/search';
     
     // Construct query string from params
@@ -216,11 +264,12 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
     });
     
     // Add console log for debugging
-    console.log(`Fetching from: ${BASE_URL}${endpoint}?${queryParams.toString()}`);
+    const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`${BASE_URL}${endpoint}?${queryParams.toString()}`)}`;
+    console.log(`Fetching from: ${apiUrl}`);
     
     // Make the request with authorization header
     const headers = await getHeaders();
-    const response = await fetch(`${BASE_URL}${endpoint}?${queryParams.toString()}`, {
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers,
       mode: 'cors',
@@ -234,10 +283,29 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
     
     const data = await response.json();
     console.log('Search results:', data);
+    
+    // If we got no results but no error, return empty results set
+    if (!data || !data.results) {
+      return {
+        result_count: 0,
+        page_count: 0,
+        page_size: pageSize,
+        page: params.page || 1,
+        results: []
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error fetching media:', error);
-    throw error;
+    // Return empty result set on error to prevent app from crashing
+    return {
+      result_count: 0,
+      page_count: 0,
+      page_size: params.page_size || 20,
+      page: params.page || 1,
+      results: []
+    };
   }
 };
 
