@@ -38,6 +38,16 @@ export interface OpenverseAudioMedia extends OpenverseMedia {
   waveform?: string;
 }
 
+export interface OpenverseVideoMedia extends OpenverseMedia {
+  duration?: number;
+  bit_rate?: number;
+  frame_rate?: number;
+  height?: number;
+  width?: number;
+  video_codec?: string;
+  video_thumbnail?: string;
+}
+
 export type MediaType = 'image' | 'audio' | 'video' | 'all';
 
 export interface SearchFilters {

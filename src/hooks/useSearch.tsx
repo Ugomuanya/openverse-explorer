@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { searchMedia } from '@/services/openverseApi';
 import { SearchParams, MediaType, OpenverseMedia, SearchResponse } from '@/types';
@@ -72,13 +73,12 @@ export function useSearch({
       
       console.log(`Results found: ${response.results.length}`);
       
-      // Handle case where audio API returns different structure
-      if (mediaType === 'audio' && Array.isArray(response.results)) {
+      // Handle case where audio or video API returns different structure
+      if ((mediaType === 'audio' || mediaType === 'video') && Array.isArray(response.results)) {
         response.results = response.results.map(item => {
-          // Transform audio-specific fields if needed
           return {
             ...item,
-            thumbnail: item.thumbnail || '/placeholder.svg'
+            thumbnail: item.thumbnail || item.video_thumbnail || '/placeholder.svg'
           };
         });
       }

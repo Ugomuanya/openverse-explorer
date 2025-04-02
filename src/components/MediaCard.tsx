@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { OpenverseMedia, OpenverseImageMedia, OpenverseAudioMedia } from '@/types';
-import { Music, Image, Play, Pause, Info } from 'lucide-react';
+import { OpenverseMedia, OpenverseImageMedia, OpenverseAudioMedia, OpenverseVideoMedia } from '@/types';
+import { Music, Image, Play, Pause, Video, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
@@ -23,7 +23,8 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, onClick }) => {
   };
 
   const isImage = 'width' in media && 'height' in media;
-  const isAudio = 'audio_set' in media || 'duration' in media;
+  const isAudio = 'audio_set' in media || ('duration' in media && !('video_codec' in media));
+  const isVideo = 'video_codec' in media || ('duration' in media && !isAudio);
 
   const handlePlayToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -103,6 +104,34 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, onClick }) => {
           </AspectRatio>
         </div>
       )}
+
+      {isVideo && (
+        <div className="relative">
+          <AspectRatio ratio={4/3} className="bg-secondary/30">
+            {!isLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <div className="animate-pulse h-12 w-12 rounded-full bg-muted-foreground/20"></div>
+              </div>
+            )}
+            <img 
+              src={media.thumbnail || (media as OpenverseVideoMedia).video_thumbnail || '/placeholder.svg'} 
+              alt={(media as OpenverseVideoMedia).title || 'Video thumbnail'}
+              className={`object-cover w-full h-full transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={handleImageLoad}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-primary/80 text-primary-foreground flex items-center justify-center">
+                <Play className="h-8 w-8" />
+              </div>
+            </div>
+            {(media as OpenverseVideoMedia).duration && (
+              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                {formatDuration((media as OpenverseVideoMedia).duration || 0)}
+              </div>
+            )}
+          </AspectRatio>
+        </div>
+      )}
       
       {/* Media info overlay on hover */}
       <motion.div 
@@ -121,7 +150,10 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, onClick }) => {
         <div className="glass-panel flex items-center space-x-1 rounded-full px-2 py-1 text-xs">
           {isImage && <Image className="h-3 w-3" />}
           {isAudio && <Music className="h-3 w-3" />}
-          <span className="sr-only">{isImage ? 'Image' : isAudio ? 'Audio' : 'Media'}</span>
+          {isVideo && <Video className="h-3 w-3" />}
+          <span className="sr-only">
+            {isImage ? 'Image' : isAudio ? 'Audio' : isVideo ? 'Video' : 'Media'}
+          </span>
         </div>
       </div>
       
@@ -147,6 +179,13 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, onClick }) => {
       </Tooltip>
     </motion.div>
   );
+};
+
+// Helper function to format duration in MM:SS format
+const formatDuration = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
 };
 
 export default MediaCard;
