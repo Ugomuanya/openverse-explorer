@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { OpenverseMedia } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -8,12 +7,20 @@ import { cn } from '@/lib/utils';
 interface AttributionInfoProps {
   media: OpenverseMedia;
   className?: string;
+  onCopy?: () => void;
+  copied?: boolean;
 }
 
-const AttributionInfo: React.FC<AttributionInfoProps> = ({ media, className }) => {
-  const [copied, setCopied] = React.useState(false);
+const AttributionInfo: React.FC<AttributionInfoProps> = ({ 
+  media, 
+  className, 
+  onCopy: externalCopyHandler, 
+  copied: externalCopiedState 
+}) => {
+  const [internalCopied, setInternalCopied] = React.useState(false);
   
-  // Format a proper attribution text
+  const copied = externalCopiedState !== undefined ? externalCopiedState : internalCopied;
+  
   const attributionText = React.useMemo(() => {
     let text = `"${media.title || 'Untitled'}" by ${media.creator || 'Unknown'} `;
     
@@ -27,12 +34,15 @@ const AttributionInfo: React.FC<AttributionInfoProps> = ({ media, className }) =
   }, [media]);
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(attributionText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (externalCopyHandler) {
+      externalCopyHandler();
+    } else {
+      navigator.clipboard.writeText(attributionText);
+      setInternalCopied(true);
+      setTimeout(() => setInternalCopied(false), 2000);
+    }
   };
   
-  // Create a render-ready attribution with links
   const renderAttribution = () => {
     return (
       <span>

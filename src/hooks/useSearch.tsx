@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { searchMedia } from '@/services/openverseApi';
-import { SearchParams, MediaType, OpenverseMedia, SearchResponse } from '@/types';
+import { SearchParams, MediaType, OpenverseMedia, SearchResponse, OpenverseVideoMedia } from '@/types';
 import { toast } from "sonner";
 import { useAuth } from '@clerk/clerk-react';
 
@@ -76,10 +76,20 @@ export function useSearch({
       // Handle case where audio or video API returns different structure
       if ((mediaType === 'audio' || mediaType === 'video') && Array.isArray(response.results)) {
         response.results = response.results.map(item => {
-          return {
-            ...item,
-            thumbnail: item.thumbnail || item.video_thumbnail || '/placeholder.svg'
-          };
+          // Fix: Type check before accessing video_thumbnail
+          if (mediaType === 'video') {
+            // Cast to OpenverseVideoMedia to access video_thumbnail
+            const videoItem = item as OpenverseVideoMedia;
+            return {
+              ...item,
+              thumbnail: item.thumbnail || videoItem.video_thumbnail || '/placeholder.svg'
+            };
+          } else {
+            return {
+              ...item,
+              thumbnail: item.thumbnail || '/placeholder.svg'
+            };
+          }
         });
       }
       
