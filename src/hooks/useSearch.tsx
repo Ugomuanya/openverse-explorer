@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from 'react';
-import { searchMedia, searchAudioDirect, searchVideoDirect } from '@/services/openverseApi';
+import { searchMedia, searchAudioDirect, searchVideoDirect, searchImageDirect } from '@/services/openverseApi';
 import { SearchParams, MediaType, OpenverseMedia, SearchResponse, OpenverseVideoMedia, OpenverseAudioMedia } from '@/types';
 import { toast } from "sonner";
 import { useAuth } from '@clerk/clerk-react';
@@ -24,7 +25,44 @@ export function useSearch({
   const [totalResults, setTotalResults] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const { isSignedIn } = useAuth();
+
+  // Function to directly search without authentication for faster results
+  const fetchDirectResults = useCallback(async (
+    searchQuery: string, 
+    searchMediaType: MediaType, 
+    currentPage: number,
+    resetResults: boolean = false
+  ) => {
+    try {
+      console.log(`Direct search for "${searchQuery}" in ${searchMediaType}, page ${currentPage}`);
+      
+      let response: SearchResponse;
+      
+      // Use the appropriate API method based on media type for direct fast searches
+      if (searchMediaType === 'audio') {
+        response = await searchAudioDirect(searchQuery, currentPage, pageSize);
+      } else if (searchMediaType === 'video') {
+        response = await searchVideoDirect(searchQuery, currentPage, pageSize);
+      } else if (searchMediaType === 'image') {
+        response = await searchImageDirect(searchQuery, currentPage, pageSize);
+      } else {
+        // For 'all' media type, use the standard searchMedia function
+        const params: SearchParams = {
+          q: searchQuery,
+          page: currentPage,
+          page_size: pageSize,
+          filter_dead: true,
+        };
+        response = await searchMedia(searchMediaType, params);
+      }
+      
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }, [pageSize]);
 
   const fetchResults = useCallback(async (resetResults: boolean = false) => {
     if (!query.trim()) {
@@ -38,11 +76,11 @@ export function useSearch({
     }
 
     // Check if user is allowed to search for this media type
-    if ((mediaType === 'image' || mediaType === 'video') && !isSignedIn) {
+    if ((mediaType === 'all' || mediaType === 'video') && !isSignedIn) {
       toast.error('Authentication required', {
-        description: 'Please sign in to search for images and videos',
+        description: 'Please sign in to search for videos and all media types',
       });
-      setError('Authentication required to search for images and videos');
+      setError('Authentication required to search for videos and all media types');
       return;
     }
 
@@ -52,25 +90,10 @@ export function useSearch({
     try {
       const currentPage = resetResults ? 1 : page;
       
-      const params: SearchParams = {
-        q: query,
-        page: currentPage,
-        page_size: pageSize,
-        filter_dead: true,
-      };
-
       console.log(`Searching for "${query}" in ${mediaType}, page ${currentPage}`);
       
-      let response: SearchResponse;
-      
-      // Use the appropriate API method based on media type
-      if (mediaType === 'audio') {
-        response = await searchAudioDirect(query, currentPage, pageSize);
-      } else if (mediaType === 'video') {
-        response = await searchVideoDirect(query, currentPage, pageSize);
-      } else {
-        response = await searchMedia(mediaType, params);
-      }
+      // Use direct search for faster results
+      const response = await fetchDirectResults(query, mediaType, currentPage, resetResults);
       
       console.log("Search response:", response);
       
@@ -147,9 +170,30 @@ export function useSearch({
     } finally {
       setLoading(false);
     }
-  }, [query, mediaType, page, pageSize, isSignedIn]);
+  }, [query, mediaType, page, pageSize, isSignedIn, fetchDirectResults]);
+
+  // Debounce search to prevent rapid-fire API calls
+  const debouncedSearch = useCallback((newQuery: string, newMediaType?: MediaType) => {
+    const updatedMediaType = newMediaType || mediaType;
+    setQuery(newQuery);
+    if (newMediaType) setMediaType(newMediaType);
+    
+    // Clear any existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set a new timeout for the search
+    const timeout = setTimeout(() => {
+      setPage(1);
+      fetchResults(true);
+    }, 300); // 300ms debounce delay
+    
+    setSearchTimeout(timeout);
+  }, [mediaType, fetchResults, searchTimeout]);
 
   const handleSearch = useCallback((newQuery: string, newMediaType?: MediaType) => {
+    // For immediate execution without debounce
     const updatedMediaType = newMediaType || mediaType;
     setQuery(newQuery);
     if (newMediaType) setMediaType(newMediaType);
@@ -178,6 +222,15 @@ export function useSearch({
     }
   }, [page, fetchResults, query]);
 
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
   return {
     query,
     mediaType,
@@ -189,8 +242,9 @@ export function useSearch({
     hasMore,
     page,
     handleSearch,
+    debouncedSearch, // Export the debounced search function
     loadMore,
     setMediaType,
-    isAuthorized: isSignedIn || (mediaType !== 'image' && mediaType !== 'video'),
+    isAuthorized: isSignedIn || (mediaType !== 'video' && mediaType !== 'all'),
   };
 }

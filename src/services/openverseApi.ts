@@ -3,6 +3,7 @@ import { SearchParams, MediaType, SearchResponse } from '@/types';
 
 // Base URL for Openverse API
 const BASE_URL = 'https://api.openverse.org';
+const ENGINEERING_BASE_URL = 'https://api.openverse.engineering';
 
 // Authentication credentials
 const client_id = '56qA4YKTCOwu9CafxN3xUVPYoeu6ypXCypD1UiLf'
@@ -75,7 +76,7 @@ export const searchAudioDirect = async (
 ): Promise<any> => {
   try {
     // Use the engineering endpoint which doesn't require auth
-    const apiUrl = `https://api.openverse.engineering/v1/audio/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    const apiUrl = `${ENGINEERING_BASE_URL}/v1/audio/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
     
     console.log(`Fetching audio directly from: ${apiUrl}`);
     
@@ -115,7 +116,7 @@ export const searchVideoDirect = async (
 ): Promise<any> => {
   try {
     // Use the engineering endpoint which might be more reliable for video
-    const apiUrl = `https://api.openverse.engineering/v1/video/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    const apiUrl = `${ENGINEERING_BASE_URL}/v1/video/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
     
     console.log(`Fetching video directly from: ${apiUrl}`);
     
@@ -142,6 +143,46 @@ export const searchVideoDirect = async (
 };
 
 /**
+ * Direct search for image content - faster than using authenticated API
+ * @param query - Search term
+ * @param page - Page number
+ * @param pageSize - Items per page
+ * @returns Promise with image search results
+ */
+export const searchImageDirect = async (
+  query: string,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<any> => {
+  try {
+    // Use the engineering endpoint for faster image searches
+    const apiUrl = `${ENGINEERING_BASE_URL}/v1/images/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    
+    console.log(`Fetching images directly from: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Image API response error:', response.status, errorText);
+      throw new Error(`Image API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Direct image search results:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching images directly:', error);
+    throw error;
+  }
+};
+
+/**
  * Search for media in Openverse
  * @param mediaType - Type of media to search for (image, audio, etc.)
  * @param params - Search parameters
@@ -149,7 +190,7 @@ export const searchVideoDirect = async (
  */
 export const searchMedia = async (mediaType: MediaType, params: SearchParams): Promise<SearchResponse> => {
   try {
-    // Use direct methods for audio and video
+    // Use direct methods for faster performance
     if (mediaType === 'audio') {
       return await searchAudioDirect(params.q, params.page, params.page_size);
     }
@@ -158,8 +199,12 @@ export const searchMedia = async (mediaType: MediaType, params: SearchParams): P
       return await searchVideoDirect(params.q, params.page, params.page_size);
     }
     
-    // For image and all, use the standard API with authentication
-    const endpoint = mediaType === 'all' ? '/v1/search' : `/v1/${mediaType}s`;
+    if (mediaType === 'image') {
+      return await searchImageDirect(params.q, params.page, params.page_size);
+    }
+    
+    // For 'all' media type, use the standard API with authentication
+    const endpoint = '/v1/search';
     
     // Construct query string from params
     const queryParams = new URLSearchParams();
