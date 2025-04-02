@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { searchMedia } from '@/services/openverseApi';
-import { SearchParams, MediaType, OpenverseMedia, SearchResponse, OpenverseVideoMedia } from '@/types';
+import { SearchParams, MediaType, OpenverseMedia, SearchResponse, OpenverseVideoMedia, OpenverseAudioMedia } from '@/types';
 import { toast } from "sonner";
 import { useAuth } from '@clerk/clerk-react';
 
@@ -74,17 +74,23 @@ export function useSearch({
       console.log(`Results found: ${response.results.length}`);
       
       // Handle case where audio or video API returns different structure
-      if ((mediaType === 'audio' || mediaType === 'video') && Array.isArray(response.results)) {
+      if (Array.isArray(response.results)) {
         response.results = response.results.map(item => {
-          // Fix: Type check before accessing video_thumbnail
+          // Check media type and ensure thumbnail is available
           if (mediaType === 'video') {
-            // Cast to OpenverseVideoMedia to access video_thumbnail
-            const videoItem = item as OpenverseVideoMedia;
+            // Handle video items
             return {
               ...item,
-              thumbnail: item.thumbnail || videoItem.video_thumbnail || '/placeholder.svg'
+              thumbnail: item.thumbnail || (item as OpenverseVideoMedia).video_thumbnail || '/placeholder.svg'
+            };
+          } else if (mediaType === 'audio') {
+            // Handle audio items
+            return {
+              ...item,
+              thumbnail: item.thumbnail || '/placeholder.svg'
             };
           } else {
+            // Default case (image or other)
             return {
               ...item,
               thumbnail: item.thumbnail || '/placeholder.svg'

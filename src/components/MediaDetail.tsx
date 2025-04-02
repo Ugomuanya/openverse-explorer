@@ -22,6 +22,7 @@ const MediaDetail: React.FC<MediaDetailProps> = ({ media, open, onOpenChange }) 
   
   if (!media) return null;
   
+  // Improved type checking for media types
   const isImage = 'width' in media && 'height' in media;
   const isAudio = 'audio_set' in media || ('duration' in media && !('video_codec' in media));
   const isVideo = 'video_codec' in media || ('duration' in media && !isAudio);

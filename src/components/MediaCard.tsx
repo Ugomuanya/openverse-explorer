@@ -22,6 +22,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, onClick }) => {
     setIsLoaded(true);
   };
 
+  // Improved type checking for media types
   const isImage = 'width' in media && 'height' in media;
   const isAudio = 'audio_set' in media || ('duration' in media && !('video_codec' in media));
   const isVideo = 'video_codec' in media || ('duration' in media && !isAudio);
