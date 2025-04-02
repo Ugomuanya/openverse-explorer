@@ -77,6 +77,7 @@ export const searchAudioDirect = async (
 ): Promise<any> => {
   try {
     // Use a CORS proxy to bypass CORS issues
+    // Fix: Use the correct endpoint path - /v1/audio/ instead of potentially wrong path
     const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`${ENGINEERING_BASE_URL}/v1/audio/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`)}`;
     
     console.log(`Fetching audio directly from (with CORS proxy): ${apiUrl}`);
