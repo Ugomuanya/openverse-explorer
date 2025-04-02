@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { searchMedia } from '@/services/openverseApi';
+import { searchMedia, searchAudioDirect, searchVideoDirect } from '@/services/openverseApi';
 import { SearchParams, MediaType, OpenverseMedia, SearchResponse, OpenverseVideoMedia, OpenverseAudioMedia } from '@/types';
 import { toast } from "sonner";
 import { useAuth } from '@clerk/clerk-react';
@@ -9,24 +8,6 @@ interface UseSearchProps {
   initialQuery?: string;
   initialMediaType?: MediaType;
   pageSize?: number;
-}
-
-// Direct audio search function from your code
-async function searchAudioDirect(query: string): Promise<any[]> {
-  const apiUrl = `https://api.openverse.engineering/v1/audio/?q=${encodeURIComponent(query)}`;
-
-  try {
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-          throw new Error(`Error fetching data: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.results || [];
-  } catch (error) {
-      console.error("Failed to fetch audio data:", error);
-      return [];
-  }
 }
 
 export function useSearch({ 
@@ -80,34 +61,14 @@ export function useSearch({
 
       console.log(`Searching for "${query}" in ${mediaType}, page ${currentPage}`);
       
-      // Enhanced approach: use direct audio search function for audio media type
-      let response;
+      let response: SearchResponse;
+      
+      // Use the appropriate API method based on media type
       if (mediaType === 'audio') {
-        // Use the direct audio search function
-        const audioResults = await searchAudioDirect(query);
-        // Convert to OpenverseMedia format
-        const formattedResults = audioResults.map(item => ({
-          ...item,
-          thumbnail: item.thumbnail || '/placeholder.svg',
-          creator_url: item.creator_url || '#',
-          foreign_landing_url: item.foreign_landing_url || item.url || '#',
-          license_version: item.license_version || '1.0',
-          provider: item.provider || 'openverse',
-          source: item.source || 'openverse',
-          detail_url: item.detail_url || `#${item.id}`,
-          related_url: item.related_url || `#${item.id}/related`,
-          audio_url: item.url // Store the audio URL
-        }));
-        
-        // Create a response structure similar to the one from searchMedia
-        response = {
-          results: formattedResults,
-          result_count: formattedResults.length,
-          page_count: 1, // Simplified pagination for direct search
-          page: 1
-        };
+        response = await searchAudioDirect(query, currentPage, pageSize);
+      } else if (mediaType === 'video') {
+        response = await searchVideoDirect(query, currentPage, pageSize);
       } else {
-        // Use the existing searchMedia function for other media types
         response = await searchMedia(mediaType, params);
       }
       
@@ -121,49 +82,59 @@ export function useSearch({
       
       console.log(`Results found: ${response.results.length}`);
       
-      // Handle case where audio or video API returns different structure
-      if (Array.isArray(response.results)) {
-        response.results = response.results.map(item => {
-          // Check media type and ensure thumbnail is available
-          if (mediaType === 'video') {
-            // Handle video items
-            return {
-              ...item,
-              thumbnail: item.thumbnail || (item as OpenverseVideoMedia).video_thumbnail || '/placeholder.svg'
-            };
-          } else if (mediaType === 'audio') {
-            // Handle audio items
-            const audioItem = item as OpenverseAudioMedia;
-            return {
-              ...item,
-              thumbnail: item.thumbnail || '/placeholder.svg',
-              url: audioItem.audio_url || audioItem.url // Ensure URL is available
-            };
-          } else {
-            // Default case (image or other)
-            return {
-              ...item,
-              thumbnail: item.thumbnail || '/placeholder.svg'
-            };
-          }
-        });
-      }
+      // Process results to ensure consistent format
+      const processedResults = response.results.map(item => {
+        // Check media type and ensure thumbnail is available
+        if (mediaType === 'video') {
+          const videoItem = item as OpenverseVideoMedia;
+          return {
+            ...item,
+            thumbnail: item.thumbnail || videoItem.video_thumbnail || '/placeholder.svg',
+            source: item.source || 'openverse',
+            provider: item.provider || 'openverse',
+            creator_url: item.creator_url || '#',
+            license_version: item.license_version || '1.0'
+          };
+        } else if (mediaType === 'audio') {
+          const audioItem = item as OpenverseAudioMedia;
+          return {
+            ...item,
+            thumbnail: item.thumbnail || '/placeholder.svg',
+            source: item.source || 'openverse',
+            provider: item.provider || 'openverse', 
+            creator_url: item.creator_url || '#',
+            license_version: item.license_version || '1.0',
+            url: audioItem.audio_url || audioItem.url || '', // Ensure URL is available
+            foreign_landing_url: item.foreign_landing_url || item.url || '#',
+          };
+        } else {
+          // Default case (image or other)
+          return {
+            ...item,
+            thumbnail: item.thumbnail || '/placeholder.svg',
+            source: item.source || 'openverse',
+            provider: item.provider || 'openverse',
+            creator_url: item.creator_url || '#',
+            license_version: item.license_version || '1.0'
+          };
+        }
+      });
       
-      setTotalResults(response.result_count || 0);
-      setTotalPages(response.page_count || 0);
-      setHasMore(currentPage < (response.page_count || 0));
+      setTotalResults(response.result_count || processedResults.length || 0);
+      setTotalPages(response.page_count || Math.ceil((response.result_count || processedResults.length) / pageSize) || 0);
+      setHasMore(currentPage < (response.page_count || Math.ceil((response.result_count || processedResults.length) / pageSize) || 0));
 
       if (resetResults) {
-        setResults(response.results || []);
+        setResults(processedResults || []);
         setPage(1);
       } else {
-        setResults(prev => [...prev, ...(response.results || [])]);
+        setResults(prev => [...prev, ...(processedResults || [])]);
       }
       
       // Show toast only when we get results
-      if (response.results && response.results.length > 0) {
-        toast.success(`Found ${response.result_count} results`);
-      } else if (response.result_count === 0) {
+      if (processedResults && processedResults.length > 0) {
+        toast.success(`Found ${response.result_count || processedResults.length} results`);
+      } else if (processedResults.length === 0) {
         toast.info("No results found. Try different search terms.");
       }
       

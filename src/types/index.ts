@@ -36,7 +36,7 @@ export interface OpenverseAudioMedia extends OpenverseMedia {
   sample_rate?: number;
   genres?: string[];
   waveform?: string;
-  audio_url?: string; // Added to match your AudioResult interface
+  audio_url?: string;
 }
 
 export interface OpenverseVideoMedia extends OpenverseMedia {
@@ -47,6 +47,7 @@ export interface OpenverseVideoMedia extends OpenverseMedia {
   width?: number;
   video_codec?: string;
   video_thumbnail?: string;
+  video_url?: string;
 }
 
 export type MediaType = 'image' | 'audio' | 'video' | 'all';

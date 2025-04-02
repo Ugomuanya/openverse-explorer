@@ -62,6 +62,86 @@ const getAccessToken = async (): Promise<string | null> => {
 };
 
 /**
+ * Direct search for audio content (no auth required)
+ * @param query - Search term
+ * @param page - Page number
+ * @param pageSize - Items per page
+ * @returns Promise with audio search results
+ */
+export const searchAudioDirect = async (
+  query: string,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<any> => {
+  try {
+    // Use the engineering endpoint which doesn't require auth
+    const apiUrl = `https://api.openverse.engineering/v1/audio/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    
+    console.log(`Fetching audio directly from: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Audio API response error:', response.status, errorText);
+      throw new Error(`Audio API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Direct audio search results:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching audio directly:', error);
+    throw error;
+  }
+};
+
+/**
+ * Direct search for video content 
+ * @param query - Search term
+ * @param page - Page number
+ * @param pageSize - Items per page
+ * @returns Promise with video search results
+ */
+export const searchVideoDirect = async (
+  query: string,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<any> => {
+  try {
+    // Use the engineering endpoint which might be more reliable for video
+    const apiUrl = `https://api.openverse.engineering/v1/video/?q=${encodeURIComponent(query)}&page=${page}&page_size=${pageSize}`;
+    
+    console.log(`Fetching video directly from: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Video API response error:', response.status, errorText);
+      throw new Error(`Video API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Direct video search results:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching video directly:', error);
+    throw error;
+  }
+};
+
+/**
  * Search for media in Openverse
  * @param mediaType - Type of media to search for (image, audio, etc.)
  * @param params - Search parameters
@@ -69,12 +149,17 @@ const getAccessToken = async (): Promise<string | null> => {
  */
 export const searchMedia = async (mediaType: MediaType, params: SearchParams): Promise<SearchResponse> => {
   try {
-    // Add API support for video search
-    const endpoint = (() => {
-      if (mediaType === 'all') return '/v1/search';
-      if (mediaType === 'video') return '/v1/videos'; // Add video endpoint
-      return `/v1/${mediaType}s`;
-    })();
+    // Use direct methods for audio and video
+    if (mediaType === 'audio') {
+      return await searchAudioDirect(params.q, params.page, params.page_size);
+    }
+    
+    if (mediaType === 'video') {
+      return await searchVideoDirect(params.q, params.page, params.page_size);
+    }
+    
+    // For image and all, use the standard API with authentication
+    const endpoint = mediaType === 'all' ? '/v1/search' : `/v1/${mediaType}s`;
     
     // Construct query string from params
     const queryParams = new URLSearchParams();
