@@ -1,3 +1,4 @@
+
 name: Test TypeScript Code
 
 on:
@@ -14,15 +15,23 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Specify Node.js version
+          node-version: '18'  # Updated to a more recent Node.js version
 
       - name: Install dependencies
         run: npm install  # Installs the dependencies
 
       - name: Run tests
-        run: npx jest --coverage  # Run the tests with coverage report
+        run: npm test  # Run the tests using the npm test script
+
+      - name: Generate coverage report
+        run: npm run test:coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./coverage/
