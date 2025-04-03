@@ -9,7 +9,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
+      tsconfig: 'tsconfig.jest.json',
     }],
   },
   coverageDirectory: 'coverage',
@@ -19,10 +19,9 @@ module.exports = {
     '!src/main.tsx',
     '!src/vite-env.d.ts',
   ],
-  // Add the types declaration file
   globals: {
     'ts-jest': {
-      tsconfig: 'tsconfig.json',
+      tsconfig: 'tsconfig.jest.json',
     },
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],

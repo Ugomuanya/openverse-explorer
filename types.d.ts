@@ -2,6 +2,9 @@
 // Global type declarations for testing libraries
 import '@testing-library/jest-dom';
 
+// Explicitly reference types for Jest
+/// <reference types="jest" />
+
 // Declare Jest globals
 declare global {
   namespace jest {

@@ -9,7 +9,7 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 // Add or update test scripts
 packageJson.scripts = {
   ...packageJson.scripts,
-  "test": "jest",
+  "test": "jest --config jest.config.js",
   "test:watch": "jest --watch",
   "test:coverage": "jest --coverage"
 };
