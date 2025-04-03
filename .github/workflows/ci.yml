@@ -1,3 +1,4 @@
+
 name: Test TypeScript Code
 
 on:
@@ -25,4 +26,4 @@ jobs:
         run: npm install  # Installs the dependencies
 
       - name: Run tests
-        run: npx jest --coverage  # Run the tests with coverage report
+        run: npm test  # Run the tests with coverage report
